@@ -120,7 +120,7 @@ export default class View{
       text.classList.add('message__text-content');
 
       userName.textContent = data.name;
-      date.textContent = new Date(Number(data.date)).toLocaleTimeString('ru-RU', {hour: '2-digit',  minute: '2-digit', day: '2-digit', month: '2-digit', year: '2-digit'});
+      date.textContent = new Date(Number(data.date)).toLocaleTimeString('ru-RU', {hour: '2-digit',  minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'});
       text.textContent = data.message;
       
       message.setAttribute('data-name', data.name);

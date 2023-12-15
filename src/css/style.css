@@ -143,6 +143,14 @@ h1 {
   font-size: 14px;
 }
 
+.message__header_user-name{
+  margin-right: 5px;
+}
+
+.message__header_date {
+  direction: rtl;
+}
+
 .message__container-yourself {
   margin-left: auto;
   text-align: right;
