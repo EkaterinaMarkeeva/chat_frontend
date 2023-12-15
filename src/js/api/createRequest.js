@@ -6,7 +6,6 @@ const createRequest = async (options) => {
   
   xhr.responseType = "text";
   
-
   try {
     if (method === 'GET') {
       xhr.open(method, servUrl + url);
@@ -20,7 +19,6 @@ const createRequest = async (options) => {
   }
 
   xhr.addEventListener('load', () => {
-    console.log('load', xhr);
     if (xhr.status >= 200 && xhr.status < 300) {
       try {
         const data = JSON.parse(xhr.responseText);

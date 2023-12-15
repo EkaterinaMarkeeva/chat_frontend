@@ -37,7 +37,6 @@ export default class View{
     const title = document.createElement('h2');
     const button = document.createElement('button');
 
-
     modal.classList.add('modal');
     title.classList.add('modal-title');
     button.classList.add('btn');
@@ -55,66 +54,83 @@ export default class View{
     this.target.container.appendChild(modal);
   }
 
-  createChat(response) {
+  createChat() {
     const chat = document.createElement('div');
+    const messages = document.createElement('div');
+    const input = document.createElement('input');
 
     chat.classList.add('chat__container');
+    messages.classList.add('chat__messages-container');
+    input.classList.add('input');
+    input.classList.add('chat__messages-input');
 
-    chat.appendChild(this.createUserList(response.user));
-    chat.appendChild(this.createCorrespondence());
+    input.type = 'text';
+
+    input.addEventListener("keypress", this.target.onEnterChatHandler);
+
+    messages.appendChild(input);
+    chat.appendChild(messages);
 
     this.target.container.appendChild(chat);
   }
 
   createUserList(data) {
+    const chat = document.querySelector('.chat__container');
     const userList = document.createElement('div');
-    const user = document.createElement('div');
-    const circle = document.createElement('div');
-    const userName = document.createElement('div');
 
     userList.classList.add('chat__userlist');
-    user.classList.add('chat__user');
-    circle.classList.add('chat__user-circle');
-    userName.classList.add('chat__user-name');
-
-    user.id = data.id;
-    userName.textContent = data.name;
-
-    user.appendChild(circle);
-    user.appendChild(userName);
-    userList.appendChild(user);
-
-    return userList;
+    
+    if (data) {
+      data.forEach(elem => {
+        const user = document.createElement('div');
+        const circle = document.createElement('div');
+        const userName = document.createElement('div');
+        
+        user.classList.add('chat__user');
+        circle.classList.add('chat__user-circle');
+        userName.classList.add('chat__user-name');
+    
+        user.id = elem.id;
+        userName.textContent = elem.name;
+    
+        user.appendChild(circle);
+        user.appendChild(userName);
+        userList.appendChild(user);
+      });
+    }
+    
+    chat.prepend(userList);
   }
 
-  createCorrespondence() {
-    const messages = document.createElement('div');
-    const message = document.createElement('div');
-    const userName = document.createElement('p');
-    const date = document.createElement('time');
-    const text = document.createElement('p');
-    const input = document.createElement('input');
+  createCorrespondence(data) {
+    const messages = document.querySelector('.chat__messages-container');
+    const input = document.querySelector('.chat__messages-input');
 
-    messages.classList.add('chat__messages-container');
-    message.classList.add('message__container');
-    userName.classList.add('userName');
-    date.classList.add('message-date');
-    text.classList.add('message-text');
-    input.classList.add('input');
-    input.classList.add('chat__messages-input');
+    if (data) {
+      const message = document.createElement('div');
+      const userName = document.createElement('p');
+      const header = document.createElement('div');
+      const date = document.createElement('time');
+      const text = document.createElement('p');
 
-    userName.textContent = null;
-    date.textContent = null;
-    text.textContent = null;
+      message.classList.add('message__container');
+      header.classList.add('message__header');
+      userName.classList.add('message__header_user-name');
+      date.classList.add('message__header_date');
+      text.classList.add('message__text-content');
 
-    input.type = 'text';
+      userName.textContent = data.name;
+      date.textContent = new Date(Number(data.date)).toLocaleTimeString('ru-RU', {hour: '2-digit',  minute: '2-digit', day: '2-digit', month: '2-digit', year: '2-digit'});
+      text.textContent = data.message;
+      
+      message.setAttribute('data-name', data.name);
 
-    message.appendChild(userName);
-    message.appendChild(date);
-    message.appendChild(text);
-    message.appendChild(input);
-    messages.appendChild(message);
-    
-    return messages;
+      header.appendChild(userName);
+      header.appendChild(date);
+      message.appendChild(header);
+      message.appendChild(text);
+
+      messages.insertBefore(message, input);
+    };
   }
 }

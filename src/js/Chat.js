@@ -11,10 +11,12 @@ export default class Chat {
     this.api = new ChatAPI();
     this.websocket = null;
     this.view = new View(this);
-
-    this.chatSend = document.querySelector('.message-input');
+    this.user = null;
 
     this.onClick = this.onClick.bind(this);
+    this.sendMessage = this.sendMessage.bind(this);
+    this.onEnterChatHandler = this.onEnterChatHandler.bind(this);
+    this.subscribeOnEvents = this.subscribeOnEvents.bind(this);
   }
 
   init() {
@@ -24,13 +26,6 @@ export default class Chat {
   bindToDOM() {}
 
   registerEvents() {
-    // this.websocket = new WebSocket('ws://http://localhost:3000/ws');
-    
-    this.chatSend.addEventListener('click', this.sendMessage);
-    // this.websocket.addEventListener('open', this.open);
-    // this.websocket.addEventListener('close', this.close);
-    // this.websocket.addEventListener('error', this.error);
-    // this.websocket.addEventListener('message', callbeck);
   }
 
   onClick(e) {
@@ -42,12 +37,18 @@ export default class Chat {
       const modal = elem.closest('.modal');
       const input = modal.querySelector('.input');
 
-      const data = { name: input.value };
+      const data = { name: input.value.trim() };
 
       const createChat = (response) => {
         if (response && response.status === 'ok') {
+          this.user = response.user;
+
           modal.remove();
-          this.view.createChat(response);
+          this.view.createChat();
+
+          this.websocket = new WebSocket('ws://localhost:3000/ws');
+
+          this.subscribeOnEvents();
 
           return;
         } 
@@ -60,9 +61,7 @@ export default class Chat {
         }
       }
 
-      // this.chat.registerEvents();
       this.api.create(data, createChat);
-      this.websocket = new WebSocket('ws://http://localhost:3000/ws');
 
       return;
     }
@@ -77,26 +76,85 @@ export default class Chat {
     }
   }
 
-  subscribeOnEvents() {}
+  subscribeOnEvents() {
+    this.websocket.addEventListener('open', (e) => {
+      console.log('open', e);
+    });
 
-  onEnterChatHandler() {}
+    this.websocket.addEventListener('message', this.renderMessage.bind(this));
 
-  sendMessage() {
-    const message = this.chatSend.value;
+    this.websocket.addEventListener('error', (e) => {
+      console.log('error', e);
+    });
+
+    this.websocket.addEventListener('close', (e) => {
+      console.log('close', e);
+    });
+
+    window.onunload = () => {
+      const user = this.user;
+
+      this.websocket.send(JSON.stringify({type: 'exit', user}));
+    }
+  }
+
+  onEnterChatHandler(e) {
+    if (e.keyCode === 13) {
+      this.sendMessage(e);
+    }
+  }
+
+  sendMessage(e) {
+    const elem = e.target;
+
+    const message = elem.value;
+    const date = Date.now();
+    const name = this.user.name;
     
     if (!message) return;
     
-    ws.send(message);
+    this.websocket.send(JSON.stringify({type: "send", name, date, message}));
     
-    chatMessage.value = '';
+    elem.value = '';
   }
 
-  renderMessage() {
-  //   const data = JSON.parse(e.data);
-  //   const { chat: messages } = data;
-  
-  //   messages.forEach(message => {
-  //   chat.appendChild(document.createTextNode(message) + '\n');
-  // });
+  renderMessage(e) {
+    const userList = document.querySelector('.chat__userlist');
+    const messages = document.querySelector('.chat__messages-container');
+
+    const data = JSON.parse(e.data);
+
+    if (Array.isArray(data)) {
+      if (userList) {
+          userList.remove();
+        }
+
+      this.view.createUserList(data);
+
+      const user = document.getElementById(this.user.id);
+      const name = user.querySelector('.chat__user-name');
+
+      name.classList.add('chat__yourself');
+
+      name.textContent = "YOU";
+    } else {
+      this.view.createCorrespondence(data);
+      
+      const userMessages = messages.querySelectorAll(`[data-name=${this.user.name}]`);
+
+      if (userMessages.length > 0) {
+        userMessages.forEach(message => {
+          const header = message.querySelector('.message__header');
+          const userName = message.querySelector('.message__header_user-name');
+
+          message.classList.add('message__container-yourself');
+          header.classList.add('message__header-yourself');
+
+          userName.textContent = "You";
+        });
+      }
+    }
+
+    this.registerEvents();
   }
 }
