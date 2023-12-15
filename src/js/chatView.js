@@ -131,6 +131,6 @@ export default class View{
       message.appendChild(text);
 
       messages.insertBefore(message, input);
-    };
+    }
   }
 }
