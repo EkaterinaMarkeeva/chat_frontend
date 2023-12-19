@@ -1,5 +1,5 @@
 const createRequest = async (options) => {
-  let xhr = new XMLHttpRequest();
+  const xhr = new XMLHttpRequest();
 
   const {method, url, data, callback} = options;
   const servUrl = 'http://localhost:3000';

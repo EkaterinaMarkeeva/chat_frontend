@@ -1,5 +1,6 @@
 import ChatAPI from "./api/ChatAPI";
 import View from "./chatView";
+import WebSocketChat from "./WebSocketChat";
 
 export default class Chat {
   constructor(container) {
@@ -9,23 +10,18 @@ export default class Chat {
 
     this.container = container;
     this.api = new ChatAPI();
-    this.websocket = null;
+    this.websocket = new WebSocketChat(this);
     this.view = new View(this);
     this.user = null;
 
     this.onClick = this.onClick.bind(this);
-    this.sendMessage = this.sendMessage.bind(this);
+    this.displayUsers = this.displayUsers.bind(this);
+    this.displayMessage = this.displayMessage.bind(this);
     this.onEnterChatHandler = this.onEnterChatHandler.bind(this);
-    this.subscribeOnEvents = this.subscribeOnEvents.bind(this);
   }
 
   init() {
     this.view.createStartModal();
-  }
-
-  bindToDOM() {}
-
-  registerEvents() {
   }
 
   onClick(e) {
@@ -44,11 +40,10 @@ export default class Chat {
           this.user = response.user;
 
           modal.remove();
+
           this.view.createChat();
-
-          this.websocket = new WebSocket('ws://localhost:3000/ws');
-
-          this.subscribeOnEvents();
+          this.websocket.createWebSocket();
+          this.websocket.subscribeOnEvents();
 
           return;
         } 
@@ -76,85 +71,55 @@ export default class Chat {
     }
   }
 
-  subscribeOnEvents() {
-    this.websocket.addEventListener('open', (e) => {
-      console.log('open', e);
-    });
-
-    this.websocket.addEventListener('message', this.renderMessage.bind(this));
-
-    this.websocket.addEventListener('error', (e) => {
-      console.log('error', e);
-    });
-
-    this.websocket.addEventListener('close', (e) => {
-      console.log('close', e);
-    });
-
-    window.onunload = () => {
-      const user = this.user;
-
-      this.websocket.send(JSON.stringify({type: 'exit', user}));
-    }
-  }
-
   onEnterChatHandler(e) {
     if (e.keyCode === 13) {
-      this.sendMessage(e);
+      const elem = e.target;
+      const message = elem.value;
+
+      if (!message) return;
+
+      const date = Date.now();
+      const name = this.user.name;
+
+      this.websocket.sendMessage({type: "send", name, date, message});
+
+      elem.value = '';
     }
   }
 
-  sendMessage(e) {
-    const elem = e.target;
-
-    const message = elem.value;
-    const date = Date.now();
-    const name = this.user.name;
-    
-    if (!message) return;
-    
-    this.websocket.send(JSON.stringify({type: "send", name, date, message}));
-    
-    elem.value = '';
-  }
-
-  renderMessage(e) {
+  displayUsers(data) {
     const userList = document.querySelector('.chat__userlist');
-    const messages = document.querySelector('.chat__messages-container');
 
-    const data = JSON.parse(e.data);
-
-    if (Array.isArray(data)) {
-      if (userList) {
-          userList.remove();
-        }
-
-      this.view.createUserList(data);
-
-      const user = document.getElementById(this.user.id);
-      const name = user.querySelector('.chat__user-name');
-
-      name.classList.add('chat__yourself');
-
-      name.textContent = "YOU";
-    } else {
-      this.view.createCorrespondence(data);
-      
-      const userMessages = messages.querySelectorAll(`[data-name=${this.user.name}]`);
-
-      if (userMessages.length > 0) {
-        userMessages.forEach(message => {
-          const header = message.querySelector('.message__header');
-          const userName = message.querySelector('.message__header_user-name');
-
-          message.classList.add('message__container-yourself');
-          header.classList.add('message__header-yourself');
-
-          userName.textContent = "You";
-        });
-      }
+    if (userList) {
+      userList.remove();
     }
 
-    this.registerEvents();
+    this.view.createUserList(data);
+
+    const user = document.getElementById(this.user.id);
+    const name = user.querySelector('.chat__user-name');
+
+    name.classList.add('chat__yourself');
+
+    name.textContent = "YOU";
+  }
+
+  displayMessage(data) {
+    this.view.createCorrespondence(data);
+
+    const messages = document.querySelector('.chat__messages-container');
+    const userMessages = messages.querySelectorAll(`[data-name=${this.user.name}]`);
+
+    if (userMessages.length > 0) {
+      userMessages.forEach(message => {
+        const header = message.querySelector('.message__header');
+        const userName = message.querySelector('.message__header_user-name');
+
+        message.classList.add('message__container-yourself');
+        header.classList.add('message__header-yourself');
+
+        userName.textContent = "You";
+      });
+    }
   }
 }
