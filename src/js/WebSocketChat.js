@@ -8,7 +8,7 @@ export default class WebSocketChat {
   }
 
   createWebSocket() {
-    this.websocket = new WebSocket('ws://localhost:3000/ws');
+    this.websocket = new WebSocket('ws://chat-backend-neda.onrender.com');
   }
 
   subscribeOnEvents() {

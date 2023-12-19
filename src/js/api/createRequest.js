@@ -2,7 +2,7 @@ const createRequest = async (options) => {
   const xhr = new XMLHttpRequest();
 
   const {method, url, data, callback} = options;
-  const servUrl = 'http://localhost:3000';
+  const servUrl = 'https://chat-backend-neda.onrender.com';
   
   xhr.responseType = "text";
   
